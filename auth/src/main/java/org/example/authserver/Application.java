@@ -3,9 +3,9 @@ package org.example.authserver;
 import io.grpc.Server;
 import io.grpc.ServerBuilder;
 import lombok.extern.slf4j.Slf4j;
-import org.example.authserver.service.zanzibar.AclFilterService;
 import org.example.authserver.service.AuthService;
 import org.example.authserver.service.CacheLoaderService;
+import org.example.authserver.service.zanzibar.AclFilterService;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
@@ -34,11 +34,11 @@ public class Application {
         cacheLoaderService.subscribe();
 
         Server server = ServerBuilder.forPort(8080)
-                .addService(new AuthService(aclFilterService))
-                .build();
+            .addService(new AuthService(aclFilterService))
+            .build();
 
         server.start();
-        log.info("Started. Listen post: 8080");
+        log.info("Started. Listen port: {}", server.getPort());
         exampleDataset.init();
         //server.awaitTermination();
     }

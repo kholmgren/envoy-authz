@@ -1,75 +1,58 @@
 version: '2'
 services:
 
-  front-envoy:
-    build:
-      context: .
-      dockerfile: Dockerfile-frontenvoy
-    volumes:
-      - ./front-envoy.yaml:/etc/front-envoy.yaml
-    networks:
-      - envoymesh
-    expose:
-      - "18000"
-      - "8001"
-    ports:
-      - "18000:18000"
-      - "8001:8001"
-
-  authz:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    networks:
-      envoymesh:
-        aliases:
-          - authz
-    environment:
-      - SPRING_PROFILES_ACTIVE=docker
-    restart: on-failure
-    expose:
-      - "8080"
-      - "8081"
-    ports:
-      - "8080:8080"
-      - "8081:8081"
-    depends_on:
-      - redis
-      - cassandra
-      - service1
-      - front-envoy
-
-  service1:
-    build:
-      context: .
-      dockerfile: Dockerfile.service
-    networks:
-      envoymesh:
-        aliases:
-          - service1
-    environment:
-      - SPRING_PROFILES_ACTIVE=docker
-    expose:
-      - "8002"
-    ports:
-      - "8002:8002"
-    depends_on:
-      - front-envoy
-      - redis
-      - cassandra
+#  front-envoy:
+#    build:
+#      context: .
+#      dockerfile: Dockerfile-frontenvoy
+#    volumes:
+#      - ./front-envoy.yaml:/etc/front-envoy.yaml
+#    expose:
+#      - "18000"
+#      - "8001"
+#    ports:
+#      - "18000:18000"
+#      - "8001:8001"
+#
+#  authz:
+#    build:
+#      context: .
+#      dockerfile: Dockerfile
+#    environment:
+#      - SPRING_PROFILES_ACTIVE=docker
+#    restart: on-failure
+#    expose:
+#      - "8080"
+#      - "8081"
+#    ports:
+#      - "8080:8080"
+#      - "8081:8081"
+#    depends_on:
+#      - redis
+#      - cassandra
+#      - service1
+#      - front-envoy
+#
+#  service1:
+#    build:
+#      context: .
+#      dockerfile: Dockerfile.service
+#    environment:
+#      - SPRING_PROFILES_ACTIVE=docker
+#    expose:
+#      - "8002"
+#    ports:
+#      - "8002:8002"
+#    depends_on:
+#      - front-envoy
+#      - redis
+#      - cassandra
 
   redis:
     image: 'bitnami/redis:latest'
     environment:
-      # ALLOW_EMPTY_PASSWORD is recommended only for development.
       - ALLOW_EMPTY_PASSWORD=yes
       - REDIS_DISABLE_COMMANDS=FLUSHDB,FLUSHALL
-    labels:
-      kompose.service.type: nodeport
-    networks:
-      envoymesh:
-        aliases:
-          - redis
     expose:
       - "6379"
     ports:
@@ -79,12 +62,7 @@ services:
 
   cassandra:
     image: bitnami/cassandra:latest
-    labels:
-      kompose.service.type: nodeport
-    networks:
-      envoymesh:
-        aliases:
-          - cassandra
+    user: root
     expose:
       - "7199"
       - "7000"
@@ -100,6 +78,27 @@ services:
     volumes:
       - 'cassandra_data:/bitnami'
 
+  zookeeper:
+    image: 'docker.io/bitnami/zookeeper:3-debian-10'
+    ports:
+      - '2181:2181'
+    volumes:
+      - 'zookeeper_data:/bitnami'
+    environment:
+      - ALLOW_ANONYMOUS_LOGIN=yes
+
+  kafka:
+    image: 'docker.io/bitnami/kafka:2-debian-10'
+    ports:
+      - '9092:9092'
+    volumes:
+      - 'kafka_data:/bitnami'
+    environment:
+      - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper:2181
+      - ALLOW_PLAINTEXT_LISTENER=yes
+    depends_on:
+      - zookeeper
+
 networks:
   envoymesh: 
     name: envoymesh
@@ -108,4 +107,8 @@ volumes:
   redis_data:
     driver: local
   cassandra_data:
+    driver: local
+  zookeeper_data:
+    driver: local
+  kafka_data:
     driver: local

@@ -1,8 +1,10 @@
-package org.example.authserver.repo;
+package org.example.authserver.repo.redis;
 
 import authserver.acl.Acl;
 import authserver.acl.AclRelationConfig;
 import lombok.extern.slf4j.Slf4j;
+import org.example.authserver.repo.SubscriptionRepository;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
@@ -12,14 +14,15 @@ import redis.clients.jedis.JedisPubSub;
 
 @Slf4j
 @Repository
-public class SubscriptionRepositoryImpl implements SubscriptionRepository {
+@ConditionalOnProperty(value = "app.subscription", havingValue = "REDIS")
+public class RedisSubscriptionRepositoryImpl implements SubscriptionRepository {
 
     private static final String PUBSUB_ACL = "pubsub_acl";
     private static final String PUBSUB_CONFIG = "pubsub_config";
 
     private final JedisPool jedis;
 
-    public SubscriptionRepositoryImpl(JedisPool jedis) {
+    public RedisSubscriptionRepositoryImpl(JedisPool jedis) {
         this.jedis = jedis;
     }
 
